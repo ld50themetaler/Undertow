@@ -199,7 +199,7 @@ RemapにはFUNCTIONSタブのVIA USER KEYにトラックボールやジョイス
 - Remap用 https://github.com/Taro-Hayashi/Undertow/releases/latest/download/tarohayashi_undertow_default.uf2
   
 ### ファームウェアのコード
-- https://github.com/Taro-Hayashi/qmk_firmware/tree/tarohayashi/keyboards/tarohayashi/undertow
+- [qmk_firmware](qmk_firmware)
   
 ### アクリルプレートのデータ
 - https://github.com/Taro-Hayashi/Undertow/releases/download/0.24.7/undertow_acrylic.zip
