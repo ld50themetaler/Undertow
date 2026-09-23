@@ -180,30 +180,62 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
     else if(force_gaming) cur_mode = GAME_MODE;
 
     if(cur_mode == SCROLL_MODE){
-        if (fabsf(x_rev_0) > fabsf(y_rev_0)) y_rev_0 = 0; else x_rev_0 = 0;
+        if (fabsf(x_rev_0) > fabsf(y_rev_0) * 1.2f) y_rev_0 = 0; else x_rev_0 = 0;
         if(!ut_config.inv_sc) { x_rev_0 *= -1.0f; y_rev_0 *= -1.0f; }
         h_rev_0 = x_rev_0; v_rev_0 = y_rev_0; x_rev_0 = y_rev_0 = 0;
     } else if(cur_mode == KEY_INPUT || cur_mode == GAME_MODE) {
         if (cur_mode == KEY_INPUT) {
-            // キー入力ロジック (既存)
             if (timer_elapsed(key_timer_0) > TIMEOUT_KEY) {
                 if(x_rev_0 > KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(key_up_0), key_right_0));
-                // ... 他方向省略
+                else if(x_rev_0 < -KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(key_up_0), key_left_0));
+                if(y_rev_0 > KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(key_up_0), key_down_0));
+                else if(y_rev_0 < -KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(key_up_0), key_up_0));
                 key_timer_0 = timer_read();
             }
         }
         x_rev_0 = y_rev_0 = 0;
     }
 
-    /* SIDE1 (Trackball) - 同様の処理をPMW33XXから読み取って実施 */
+    /* SIDE1 (Trackball) */
     pmw33xx_report_t report = pmw33xx_read_burst(1);
     if (abs(report.delta_x) <= TRACKBALL_DEADZONE) report.delta_x = 0;
     if (abs(report.delta_y) <= TRACKBALL_DEADZONE) report.delta_y = 0;
     rad = (float)ut_config.angle_1 * 12.0f * (M_PI / 180.0f) * -1.0f;
     float x_rev_1_raw = + report.delta_x * cosf(rad) - report.delta_y * sinf(rad);
     float y_rev_1_raw = + report.delta_x * sinf(rad) + report.delta_y * cosf(rad);
-    // (SIDE1の平滑化・モード処理はSIDE0と同様のため構造的に適用)
-    x_rev_1 = x_rev_1_raw; y_rev_1 = y_rev_1_raw; // 簡略化して記載
+
+    float smoothed_x_1 = prev_x_1 * SMOOTHING_FACTOR + x_rev_1_raw * (1.0f - SMOOTHING_FACTOR);
+    float smoothed_y_1 = prev_y_1 * SMOOTHING_FACTOR + y_rev_1_raw * (1.0f - SMOOTHING_FACTOR);
+    if (fabsf(smoothed_x_1) < SMOOTHING_CUTOFF) { smoothed_x_1 = 0; prev_x_1 = 0; } else { prev_x_1 = smoothed_x_1; }
+    if (fabsf(smoothed_y_1) < SMOOTHING_CUTOFF) { smoothed_y_1 = 0; prev_y_1 = 0; } else { prev_y_1 = smoothed_y_1; }
+
+    float dynamic_multiplier_1 = fminf(fmaxf(1.0f + sqrtf(smoothed_x_1*smoothed_x_1 + smoothed_y_1*smoothed_y_1) / 10.0f, 0.5f), 3.0f);
+    x_rev_1 = x_rev_1_raw * SENSITIVITY_MULTIPLIER * dynamic_multiplier_1;
+    y_rev_1 = y_rev_1_raw * SENSITIVITY_MULTIPLIER * dynamic_multiplier_1;
+    if(ut_config.inv_1) x_rev_1 = -1.0f * x_rev_1;
+
+    uint8_t cur_mode_1 = ut_config.pd_mode_1;
+    if(force_cursoring) cur_mode_1 = CURSOR_MODE;
+    else if(force_scrolling) cur_mode_1 = SCROLL_MODE;
+    else if(force_key_input) cur_mode_1 = KEY_INPUT;
+    else if(force_gaming) cur_mode_1 = GAME_MODE;
+
+    if(cur_mode_1 == SCROLL_MODE){
+        if (fabsf(x_rev_1) > fabsf(y_rev_1) * 1.2f) y_rev_1 = 0; else x_rev_1 = 0;
+        if(!ut_config.inv_sc) { x_rev_1 *= -1.0f; y_rev_1 *= -1.0f; }
+        h_rev_1 = x_rev_1; v_rev_1 = y_rev_1; x_rev_1 = y_rev_1 = 0;
+    } else if(cur_mode_1 == KEY_INPUT || cur_mode_1 == GAME_MODE) {
+        if (cur_mode_1 == KEY_INPUT) {
+            if (timer_elapsed(key_timer_1) > TIMEOUT_KEY) {
+                if(x_rev_1 > KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(key_up_1), key_right_1));
+                else if(x_rev_1 < -KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(key_up_1), key_left_1));
+                if(y_rev_1 > KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(key_up_1), key_down_1));
+                else if(y_rev_1 < -KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(key_up_1), key_up_1));
+                key_timer_1 = timer_read();
+            }
+        }
+        x_rev_1 = y_rev_1 = 0;
+    }
 
     /* JOYSTICK */
     if(joystick_attached != 2){
@@ -272,7 +304,25 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
             if (fabsf(x_rev_js) < 0.1f) x_rev_js = 0;
             if (fabsf(y_rev_js) < 0.1f) y_rev_js = 0;
             if (inv_js) x_rev_js *= -1.0f;
-            // ... スクロール・キー入力分岐 (既存と同様)
+
+            if (cur_mode == SCROLL_MODE) {
+                if (fabsf(x_rev_js) > fabsf(y_rev_js) * 1.2f) y_rev_js = 0; else x_rev_js = 0;
+                if (!ut_config.inv_sc) { x_rev_js *= -1.0f; y_rev_js *= -1.0f; }
+                h_rev_js = x_rev_js; v_rev_js = y_rev_js; x_rev_js = y_rev_js = 0;
+            } else if (cur_mode == KEY_INPUT) {
+                if (timer_elapsed(key_timer_0) > TIMEOUT_KEY) {
+                    keypos_t ku = (joystick_attached == 0) ? key_up_0 : key_up_1;
+                    keypos_t kd = (joystick_attached == 0) ? key_down_0 : key_down_1;
+                    keypos_t kl = (joystick_attached == 0) ? key_left_0 : key_left_1;
+                    keypos_t kr = (joystick_attached == 0) ? key_right_0 : key_right_1;
+                    if (x_rev_js > KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(ku), kr));
+                    else if (x_rev_js < -KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(ku), kl));
+                    if (y_rev_js > KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(ku), kd));
+                    else if (y_rev_js < -KEY_OFFSET) tap_code16(keymap_key_to_keycode(layer_switch_get_layer(ku), ku));
+                    key_timer_0 = timer_read();
+                }
+                x_rev_js = y_rev_js = 0;
+            }
         }
     }
 
@@ -292,6 +342,8 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
         // 微小すぎる蓄積は少しずつ減衰させて「いつの間にか1ピクセル動く」のを防ぐ
         x_accumulator *= 0.8f;
         y_accumulator *= 0.8f;
+        mouse_report.x = 0;
+        mouse_report.y = 0;
     }
 
     // スクロール報告
