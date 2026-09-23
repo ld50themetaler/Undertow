@@ -7,6 +7,7 @@
 #ifndef MS_BTN1
 #    define MS_BTN1 KC_BTN1
 #    define MS_BTN2 KC_BTN2
+#    define MS_BTN3 KC_BTN3
 #    define MS_WHLU KC_WH_U
 #    define MS_WHLD KC_WH_D
 #endif
