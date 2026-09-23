@@ -204,21 +204,25 @@ bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record) {
                 }
                 return false;
                 break;
-        // ゲームパッド左
-        case GP_LEFT:
+        // スクロール速度 +
+        case SCRL_SPD_I:
                 if (record->event.pressed) {
-                    joystick_set_axis(0, -511);
-                }else{
-                    joystick_set_axis(0, 0);
+                    if (ut_config.scrl_spd < SCRL_SPD_OPTION_MAX - 1) {
+                        ut_config.scrl_spd++;
+                        eeconfig_update_kb(ut_config.raw);
+                    }
+                    oled_interrupt(keycode);
                 }
                 return false;
                 break;
-        // ゲームパッド右
-        case GP_RIGHT:
+        // スクロール速度 -
+        case SCRL_SPD_D:
                 if (record->event.pressed) {
-                    joystick_set_axis(0, 511);
-                }else{
-                    joystick_set_axis(0, 0);
+                    if (ut_config.scrl_spd > 0) {
+                        ut_config.scrl_spd--;
+                        eeconfig_update_kb(ut_config.raw);
+                    }
+                    oled_interrupt(keycode);
                 }
                 return false;
                 break;
@@ -255,26 +259,6 @@ bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record) {
                     set_joystick_offset_max(get_joystick_offset_max() + 5);
                 }
                 oled_interrupt(keycode);
-                return false;
-                break;
-        case SCRL_SPD_I:
-                if (record->event.pressed) {
-                    if (ut_config.scrl_spd < SCRL_SPD_OPTION_MAX - 1) {
-                        ut_config.scrl_spd++;
-                        eeconfig_update_kb(ut_config.raw);
-                    }
-                    oled_interrupt(keycode);
-                }
-                return false;
-                break;
-        case SCRL_SPD_D:
-                if (record->event.pressed) {
-                    if (ut_config.scrl_spd > 0) {
-                        ut_config.scrl_spd--;
-                        eeconfig_update_kb(ut_config.raw);
-                    }
-                    oled_interrupt(keycode);
-                }
                 return false;
                 break;
     }

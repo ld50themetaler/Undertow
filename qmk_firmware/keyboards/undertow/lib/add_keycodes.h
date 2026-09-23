@@ -37,15 +37,14 @@ enum TH_keycodes{
     JS_RESET,
     GP_UP,
     GP_DOWN,
-    GP_LEFT,
-    GP_RIGHT,
+    SCRL_SPD_I,
+    SCRL_SPD_D,
     MOD_GAME,
     OFFSET_MIN_D,
     OFFSET_MIN_I,
     OFFSET_MAX_D,
     OFFSET_MAX_I,
-    SCRL_SPD_I,
-    SCRL_SPD_D
+    UNUSED_31
 };
 
 bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record);
