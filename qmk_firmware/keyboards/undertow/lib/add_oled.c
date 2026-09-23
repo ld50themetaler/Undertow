@@ -8,6 +8,20 @@
 #include "lib/add_keycodes.h"
 #include "analog.h"
 
+#ifndef UG_HUEU
+#    define UG_HUEU RGB_HUI
+#    define UG_HUED RGB_HUD
+#    define UG_SATU RGB_SAI
+#    define UG_SATD RGB_SAD
+#    define UG_VALU RGB_VAI
+#    define UG_VALD RGB_VAD
+#    define UG_SPDU RGB_SPI
+#    define UG_SPDD RGB_SPD
+#    define UG_NEXT RGB_MOD
+#    define UG_PREV RGB_RMOD
+#    define UG_TOGG RGB_TOG
+#endif
+
 uint8_t pre_layer, cur_layer;
 bool interrupted;
 uint16_t interrupted_time, interrupt_type;

@@ -4,6 +4,13 @@
 #pragma once
 #include "quantum.h"
 
+#ifndef MS_BTN1
+#    define MS_BTN1 KC_BTN1
+#    define MS_BTN2 KC_BTN2
+#    define MS_WHLU KC_WH_U
+#    define MS_WHLD KC_WH_D
+#endif
+
 // 追加するキーコード
 enum TH_keycodes{
     SPD_I_0 = QK_KB_0,
