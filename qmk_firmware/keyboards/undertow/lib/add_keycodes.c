@@ -187,23 +187,28 @@ bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record) {
                 return false;
                 break;
         // ゲームパッド上
-        case GP_UP:
-                if (record->event.pressed) {
-                    joystick_set_axis(1, -511);
-                }else{
-                    joystick_set_axis(1, 0);
+        // 加速度レベル +
+        case ACCEL_SPD_I:
+            if (record->event.pressed) {
+                if (ut_config.accel_lvl < ACCEL_LVL_MAX) {
+                    ut_config.accel_lvl++;
+                    eeconfig_update_kb(ut_config.raw);
                 }
-                return false;
-                break;
-        // ゲームパッド下
-        case GP_DOWN:
-                if (record->event.pressed) {
-                    joystick_set_axis(1, 511);
-                }else{
-                    joystick_set_axis(1, 0);
+                oled_interrupt(keycode);
+            }
+            return false;
+            break;
+        // 加速度レベル -
+        case ACCEL_SPD_D:
+            if (record->event.pressed) {
+                if (ut_config.accel_lvl > 0) {
+                    ut_config.accel_lvl--;
+                    eeconfig_update_kb(ut_config.raw);
                 }
-                return false;
-                break;
+                oled_interrupt(keycode);
+            }
+            return false;
+            break;
         // スクロール速度 +
         case SCRL_SPD_I:
                 if (record->event.pressed) {
@@ -261,6 +266,20 @@ bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record) {
                 oled_interrupt(keycode);
                 return false;
                 break;
+        case ACCEL_TOG:
+            if (record->event.pressed) {
+                static uint8_t last_accel_lvl = ACCEL_LVL_DEFAULT;
+                if (ut_config.accel_lvl > 0) {
+                    last_accel_lvl = ut_config.accel_lvl;
+                    ut_config.accel_lvl = 0;
+                } else {
+                    ut_config.accel_lvl = (last_accel_lvl > 0) ? last_accel_lvl : ACCEL_LVL_DEFAULT;
+                }
+                eeconfig_update_kb(ut_config.raw);
+                oled_interrupt(keycode);
+            }
+            return false;
+            break;
     }
     if (record->event.pressed) {
         oled_interrupt(keycode);

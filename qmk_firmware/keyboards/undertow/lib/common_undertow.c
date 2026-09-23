@@ -18,21 +18,53 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
 #define TRACKBALL_DEADZONE 0      // 光学式トラックボールは静止時0を出力するためデッドゾーン不要
 #define JS_MIN_SPAN        5.0f   // ジョイスティックの稼働範囲がこれ以下なら無効（ゼロ除算防止）
 
-// Kugel-1 式 2次関数加速カーブ計算（低速精密減速＋中高速加速）
+// 加速度プロファイル構造体
+typedef struct {
+    float low_mult_1;   // 極低速倍率 (v <= 1.5)
+    float low_mult_2;   // 低速倍率 (1.5 < v <= 3.0)
+    float low_mult_3;   // 中低速倍率 (3.0 < v <= 5.0)
+    float k_coeff;      // 加速係数 (v > 6.0)
+    float max_factor;   // 最大倍率
+} tb_accel_profile_t;
+
+static const tb_accel_profile_t s_accel_profiles[ACCEL_LVL_MAX + 1] = {
+    /* 0: OFF */    { 1.00f, 1.00f, 1.00f, 0.000f, 1.00f },
+    /* 1: 超精密 */ { 0.30f, 0.50f, 0.70f, 0.015f, 2.00f },
+    /* 2: マイルド */{ 0.35f, 0.55f, 0.75f, 0.020f, 2.75f },
+    /* 3: 標準 */   { 0.40f, 0.60f, 0.80f, 0.025f, 3.50f },
+    /* 4: キビキビ */{ 0.45f, 0.65f, 0.85f, 0.035f, 4.50f },
+    /* 5: ウルトラ */{ 0.50f, 0.70f, 0.90f, 0.050f, 6.00f },
+};
+
+// Kugel-1 式 2次関数加速カーブ計算（低速域拡大・超精密減速＋中高速加速）
 static inline float calculate_tb_acceleration(float dx, float dy) {
+    uint8_t lvl = ut_config.accel_lvl;
+    if (lvl > ACCEL_LVL_MAX) {
+        lvl = ACCEL_LVL_DEFAULT;
+    }
+    if (lvl == 0) {
+        return 1.0f; // 加速OFF: 完全等倍
+    }
+
+    const tb_accel_profile_t *p = &s_accel_profiles[lvl];
     float v = fmaxf(fabsf(dx), fabsf(dy));
     if (v <= 0.001f) {
         return 1.0f;
     }
-    if (v <= 1.0f) {
-        return TB_PRECISION_FACTOR_1; // 0.60x: 極低速精密操作
-    } else if (v <= 2.0f) {
-        return TB_PRECISION_FACTOR_2; // 0.80x: 低速精密操作
+
+    if (v <= 1.5f) {
+        return p->low_mult_1;
+    } else if (v <= 3.0f) {
+        return p->low_mult_2;
+    } else if (v <= 5.0f) {
+        return p->low_mult_3;
+    } else if (v <= 6.0f) {
+        return 1.00f; // 等倍巡航
     } else {
-        float diff = v - 3.0f;
-        float factor = 1.0f + TB_ACCEL_K_COEFF * (diff * diff);
-        if (factor > TB_ACCEL_MAX_FACTOR) {
-            factor = TB_ACCEL_MAX_FACTOR;
+        float diff = v - 6.0f;
+        float factor = 1.0f + p->k_coeff * (diff * diff);
+        if (factor > p->max_factor) {
+            factor = p->max_factor;
         }
         return factor;
     }
@@ -78,6 +110,7 @@ void eeconfig_init_kb(void) {
     ut_config.oled_mode = OLED_DEFAULT;
     ut_config.js_side = JS_SIDE_DEFAULT;
     ut_config.scrl_spd = SCRL_SPD_DEFAULT;
+    ut_config.accel_lvl = ACCEL_LVL_DEFAULT;
     eeconfig_update_kb(ut_config.raw);
     eeconfig_init_user();
 }
@@ -163,6 +196,7 @@ void pointing_device_init_kb(void){
     pmw33xx_init(1);
     pmw33xx_set_cpi(0, 1000 + ut_config.spd_0 * 250);
     pmw33xx_set_cpi(1, 1000 + ut_config.spd_1 * 250);
+    if(ut_config.accel_lvl > ACCEL_LVL_MAX) ut_config.accel_lvl = ACCEL_LVL_DEFAULT;
     if(joystick_attached != 2) joystick_attached = ut_config.js_side;
     set_auto_mouse_enable(ut_config.auto_mouse);
     pointing_device_init_user();

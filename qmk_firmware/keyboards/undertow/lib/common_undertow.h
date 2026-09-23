@@ -24,6 +24,7 @@ typedef union{
         bool oled_mode  :1; // oled表示
         bool js_side    :1;
         uint8_t scrl_spd :3; // スクロール速度 最大値7
+        uint8_t accel_lvl :3; // 加速度レベル 最大値5 (0: OFF)
     };
 } ut_config_t;
 

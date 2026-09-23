@@ -189,6 +189,17 @@ bool oled_task_addedoled(void) {
                         oled_write(get_u16_str((uint16_t)ut_config.scrl_spd + 1, ' '), false);
                         oled_write_P(PSTR("   "), false);
                     break;
+                case ACCEL_SPD_I:
+                case ACCEL_SPD_D:
+                case ACCEL_TOG:
+                    if (ut_config.accel_lvl == 0) {
+                        oled_write_P(PSTR("ACCEL: OFF (1.0x)    "), false);
+                    } else {
+                        oled_write_P(PSTR("ACCEL: LEVEL "), false);
+                        oled_write(get_u16_str((uint16_t)ut_config.accel_lvl, ' '), false);
+                        oled_write_P(PSTR("     "), false);
+                    }
+                    break;
             }
         }else{
             interrupted = false;
