@@ -257,6 +257,26 @@ bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record) {
                 oled_interrupt(keycode);
                 return false;
                 break;
+        case SCRL_SPD_I:
+                if (record->event.pressed) {
+                    if (ut_config.scrl_spd < SCRL_SPD_OPTION_MAX - 1) {
+                        ut_config.scrl_spd++;
+                        eeconfig_update_kb(ut_config.raw);
+                    }
+                    oled_interrupt(keycode);
+                }
+                return false;
+                break;
+        case SCRL_SPD_D:
+                if (record->event.pressed) {
+                    if (ut_config.scrl_spd > 0) {
+                        ut_config.scrl_spd--;
+                        eeconfig_update_kb(ut_config.raw);
+                    }
+                    oled_interrupt(keycode);
+                }
+                return false;
+                break;
     }
     if (record->event.pressed) {
         oled_interrupt(keycode);

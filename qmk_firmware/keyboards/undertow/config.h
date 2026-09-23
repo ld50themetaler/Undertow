@@ -51,6 +51,8 @@
 #define JOYSTICK_OFFSET_MIN_DEFAULT 70 // ジョイスティックの小さい値を無視する範囲 最大200
 #define JOYSTICK_OFFSET_MAX_DEFAULT 0 // ジョイスティックの大きい値を無視する範囲 最大200
 #define SCROLL_DIVISOR 15.0        // スクロール用数値調整
+#define SCRL_SPD_DEFAULT 3         // スクロール速度デフォルト (0〜7、3=レベル4)
+#define SCRL_SPD_OPTION_MAX 8      // スクロール速度最大段階数
 #define JOYSTICK_DIVISOR 40.0       // ジョイスティック用調整用
 #define INTERRUPT_TIME 600          // OLED切り替え時間
 #define KEY_OFFSET 5                // キー入力閾値

@@ -23,6 +23,7 @@ typedef union{
         bool auto_mouse :1; // オートマウスON/OFF
         bool oled_mode  :1; // oled表示
         bool js_side    :1;
+        uint8_t scrl_spd :3; // スクロール速度 最大値7
     };
 } ut_config_t;
 

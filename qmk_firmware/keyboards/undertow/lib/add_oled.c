@@ -183,6 +183,12 @@ bool oled_task_addedoled(void) {
                         oled_write(get_u16_str(get_joystick_offset_max(), ' '), false);
                         oled_write_P(PSTR("   "), false);
                     break;
+                case SCRL_SPD_D:
+                case SCRL_SPD_I:
+                        oled_write_P(PSTR("SCROLL SPEED: "), false);
+                        oled_write(get_u16_str((uint16_t)ut_config.scrl_spd + 1, ' '), false);
+                        oled_write_P(PSTR("   "), false);
+                    break;
             }
         }else{
             interrupted = false;

@@ -36,6 +36,8 @@
     { "name": "Increase Min Offset", "title": "", "shortName": "" },
     { "name": "Decrease Max Offset", "title": "", "shortName": "" },
     { "name": "Increase Max Offset", "title": "", "shortName": "" },
+    { "name": "Scroll Speed +", "title": "Scroll Speed Up", "shortName": "SCRL+" },
+    { "name": "Scroll Speed -", "title": "Scroll Speed Down", "shortName": "SCRL-" },
     { "name": "-", "title": "Not Assigned", "shortName": "-" }
   ],
   "layouts": {

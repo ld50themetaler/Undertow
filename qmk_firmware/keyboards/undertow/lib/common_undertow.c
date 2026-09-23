@@ -58,6 +58,7 @@ void eeconfig_init_kb(void) {
     ut_config.auto_mouse = AUTO_MOUSE_DEFAULT;
     ut_config.oled_mode = OLED_DEFAULT;
     ut_config.js_side = JS_SIDE_DEFAULT;
+    ut_config.scrl_spd = SCRL_SPD_DEFAULT;
     eeconfig_update_kb(ut_config.raw);
     eeconfig_init_user();
 }
@@ -327,10 +328,11 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
     }
 
     /* 最終合算と端数処理 */
+    float scrl_mult = 0.5f + (float)ut_config.scrl_spd * 0.25f;
     x_accumulator += (x_rev_0 + x_rev_1) * SMOOTHING_FACTOR + x_rev_js;
     y_accumulator += (y_rev_0 + y_rev_1) * SMOOTHING_FACTOR + y_rev_js;
-    h_accumulator += ((h_rev_0 + h_rev_1) * SMOOTHING_FACTOR + h_rev_js) / SCROLL_DIVISOR;
-    v_accumulator += ((v_rev_0 + v_rev_1) * SMOOTHING_FACTOR + v_rev_js) / SCROLL_DIVISOR;
+    h_accumulator += (((h_rev_0 + h_rev_1) * SMOOTHING_FACTOR + h_rev_js) * scrl_mult) / SCROLL_DIVISOR;
+    v_accumulator += (((v_rev_0 + v_rev_1) * SMOOTHING_FACTOR + v_rev_js) * scrl_mult) / SCROLL_DIVISOR;
 
     // 1ピクセル以上の移動がある場合のみ出力
     if (fabsf(x_accumulator) >= 1.0f || fabsf(y_accumulator) >= 1.0f) {
