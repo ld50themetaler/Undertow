@@ -249,7 +249,7 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
 
     uint8_t cur_mode = ut_config.pd_mode_0;
     if(force_cursoring) cur_mode = CURSOR_MODE;
-    else if(force_scrolling) cur_mode = SCROLL_MODE;
+    else if(force_scrolling || IS_LAYER_ON(1)) cur_mode = SCROLL_MODE;
     else if(force_key_input) cur_mode = KEY_INPUT;
     else if(force_gaming) cur_mode = GAME_MODE;
 
@@ -284,7 +284,7 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
 
     uint8_t cur_mode_1 = ut_config.pd_mode_1;
     if(force_cursoring) cur_mode_1 = CURSOR_MODE;
-    else if(force_scrolling) cur_mode_1 = SCROLL_MODE;
+    else if(force_scrolling || IS_LAYER_ON(1)) cur_mode_1 = SCROLL_MODE;
     else if(force_key_input) cur_mode_1 = KEY_INPUT;
     else if(force_gaming) cur_mode_1 = GAME_MODE;
 
@@ -310,12 +310,12 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
         float amp_temp;
         bool inv_js;
         if(joystick_attached == 0){
-            cur_mode = force_gaming ? GAME_MODE : (force_cursoring ? CURSOR_MODE : (force_scrolling ? SCROLL_MODE : (force_key_input ? KEY_INPUT : ut_config.pd_mode_0)));
+            cur_mode = force_gaming ? GAME_MODE : (force_cursoring ? CURSOR_MODE : ((force_scrolling || IS_LAYER_ON(1)) ? SCROLL_MODE : (force_key_input ? KEY_INPUT : ut_config.pd_mode_0)));
             rad = (float)ut_config.angle_0 * 12.0f * (M_PI / 180.0f) * -1.0f;
             amp_temp = 16.0f + (float)ut_config.spd_0 * 3.0f;
             inv_js = ut_config.inv_0;
         }else{
-            cur_mode = force_gaming ? GAME_MODE : (force_cursoring ? CURSOR_MODE : (force_scrolling ? SCROLL_MODE : (force_key_input ? KEY_INPUT : ut_config.pd_mode_1)));
+            cur_mode = force_gaming ? GAME_MODE : (force_cursoring ? CURSOR_MODE : ((force_scrolling || IS_LAYER_ON(1)) ? SCROLL_MODE : (force_key_input ? KEY_INPUT : ut_config.pd_mode_1)));
             rad = (float)ut_config.angle_1 * 12.0f * (M_PI / 180.0f) * -1.0f;
             amp_temp = 16.0f + (float)ut_config.spd_1 * 3.0f;
             inv_js = ut_config.inv_1;
