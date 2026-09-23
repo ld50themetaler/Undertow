@@ -17,10 +17,10 @@
 #define TB_SIDE1_DEFAULT CURSOR_MODE
 #define JS_SIDE_DEFAULT 0 // 0: SIDE0, 1: SIDE1, 2: none
 
-// CPI = 1000 + spd * 250 / AMP = 16.0 + (double)spd * 3.0
-#define SPD_OPTION_MAX    7     // 最大値
-#define SPD_DEFAULT_SIDE0 2
-#define SPD_DEFAULT_SIDE1 2
+// CPI: テーブル参照方式 (200, 400, 600, 800, 1000, 1200, 1600, 2000)
+#define SPD_OPTION_MAX    8     // 最大段階数 (3bit: 0〜7)
+#define SPD_DEFAULT_SIDE0 3     // デフォルト: 800 DPI
+#define SPD_DEFAULT_SIDE1 3     // デフォルト: 800 DPI
 // 角度 = angle * 12
 #define ANGLE_OPTION_MAX    29  // 最大値
 #define ANGLE_DEFAULT_SIDE0 8

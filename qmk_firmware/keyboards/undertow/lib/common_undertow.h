@@ -48,3 +48,4 @@ void is_game_mode(bool is_force_gaming);
 void is_slow_mode(bool is_slow_mode);
 bool get_dpad_exclusion(void);
 void toggle_dpad_exclusion(void);
+uint16_t get_cpi_by_spd(uint8_t spd);

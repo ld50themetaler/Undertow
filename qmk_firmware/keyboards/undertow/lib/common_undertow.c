@@ -196,14 +196,33 @@ void matrix_init_kb(void) {
     matrix_init_user();
 }
 
+static const uint16_t s_cpi_table[SPD_OPTION_MAX] = {
+    200, 400, 600, 800, 1000, 1200, 1600, 2000
+};
+
+uint16_t get_cpi_by_spd(uint8_t spd) {
+    if (spd >= SPD_OPTION_MAX) {
+        spd = SPD_DEFAULT_SIDE0;
+    }
+    return s_cpi_table[spd];
+}
+
 void pointing_device_init_kb(void){
     ut_config.raw = eeconfig_read_kb();
+    if(ut_config.spd_0 >= SPD_OPTION_MAX) ut_config.spd_0 = SPD_DEFAULT_SIDE0;
+    if(ut_config.spd_1 >= SPD_OPTION_MAX) ut_config.spd_1 = SPD_DEFAULT_SIDE1;
+    if(ut_config.angle_0 >= ANGLE_OPTION_MAX) ut_config.angle_0 = ANGLE_DEFAULT_SIDE0;
+    if(ut_config.angle_1 >= ANGLE_OPTION_MAX) ut_config.angle_1 = ANGLE_DEFAULT_SIDE1;
+    if(ut_config.pd_mode_0 >= 4) ut_config.pd_mode_0 = TB_SIDE0_DEFAULT;
+    if(ut_config.pd_mode_1 >= 4) ut_config.pd_mode_1 = TB_SIDE1_DEFAULT;
+    if(ut_config.scrl_spd >= SCRL_SPD_OPTION_MAX) ut_config.scrl_spd = SCRL_SPD_DEFAULT;
+    if(ut_config.accel_lvl > ACCEL_LVL_MAX) ut_config.accel_lvl = ACCEL_LVL_DEFAULT;
+
     prev_x_0 = prev_y_0 = prev_x_1 = prev_y_1 = 0.0f;
     h_accumulator = v_accumulator = x_accumulator = y_accumulator = 0.0f;
     pmw33xx_init(1);
-    pmw33xx_set_cpi(0, 1000 + ut_config.spd_0 * 250);
-    pmw33xx_set_cpi(1, 1000 + ut_config.spd_1 * 250);
-    if(ut_config.accel_lvl > ACCEL_LVL_MAX) ut_config.accel_lvl = ACCEL_LVL_DEFAULT;
+    pmw33xx_set_cpi(0, get_cpi_by_spd(ut_config.spd_0));
+    pmw33xx_set_cpi(1, get_cpi_by_spd(ut_config.spd_1));
     if(joystick_attached != 2) joystick_attached = ut_config.js_side;
     set_auto_mouse_enable(ut_config.auto_mouse);
     pointing_device_init_user();
@@ -522,8 +541,8 @@ void is_slow_mode(bool is_slow_mode){
         pmw33xx_set_cpi(0, CPI_SLOW);
         pmw33xx_set_cpi(1, CPI_SLOW);
     }else{
-        pmw33xx_set_cpi(0, 1000 + ut_config.spd_0 * 250);
-        pmw33xx_set_cpi(1, 1000 + ut_config.spd_1 * 250);
+        pmw33xx_set_cpi(0, get_cpi_by_spd(ut_config.spd_0));
+        pmw33xx_set_cpi(1, get_cpi_by_spd(ut_config.spd_1));
     }
     clear_keyinput();
 }

@@ -18,7 +18,7 @@ bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record) {
                     ut_config.spd_0 = SPD_OPTION_MAX-1;
                 }
                 eeconfig_update_kb(ut_config.raw);
-                pmw33xx_set_cpi(0,  1000 + ut_config.spd_0 * 250);
+                pmw33xx_set_cpi(0, get_cpi_by_spd(ut_config.spd_0));
                 oled_interrupt(keycode);
             }
             return false;
@@ -30,7 +30,7 @@ bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record) {
                     ut_config.spd_1 = SPD_OPTION_MAX-1;
                 }
                 eeconfig_update_kb(ut_config.raw);
-                pmw33xx_set_cpi(1,  1000 + ut_config.spd_1 * 250);
+                pmw33xx_set_cpi(1, get_cpi_by_spd(ut_config.spd_1));
                 oled_interrupt(keycode);
             }
             return false;
@@ -41,7 +41,7 @@ bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record) {
                     ut_config.spd_0 = ut_config.spd_0 - 1;
                 }
                 eeconfig_update_kb(ut_config.raw);
-                pmw33xx_set_cpi(0,  1000 + ut_config.spd_0 * 250);
+                pmw33xx_set_cpi(0, get_cpi_by_spd(ut_config.spd_0));
                 oled_interrupt(keycode);
             }
             return false;
@@ -52,7 +52,7 @@ bool process_record_addedkeycodes(uint16_t keycode, keyrecord_t *record) {
                     ut_config.spd_1 = ut_config.spd_1 - 1;
                 }
                 eeconfig_update_kb(ut_config.raw);
-                pmw33xx_set_cpi(1,  1000 + ut_config.spd_1 * 250);
+                pmw33xx_set_cpi(1, get_cpi_by_spd(ut_config.spd_1));
                 oled_interrupt(keycode);
             }
             return false;
