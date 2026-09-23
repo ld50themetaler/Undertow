@@ -546,6 +546,15 @@ void toggle_rgblayers(void){
 }
 
 #ifdef VIA_ENABLE
+void via_init_kb(void) {
+    // 過去に設定されたEEPROMが存在する場合、
+    // FW更新でビルド日が変わっても自動リセット（dynamic_keymap_reset）を走らせず、
+    // Remap/VIAで設定したキーマップやトラックボール設定をそのまま保持・継承する
+    if (eeconfig_is_enabled()) {
+        via_eeprom_set_valid(true);
+    }
+}
+
 bool via_command_kb(uint8_t *data, uint8_t length) {
     uint8_t *command_id = &(data[0]);
     if (*command_id == id_bootloader_jump || *command_id == 0xBB) {
