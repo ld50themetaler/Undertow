@@ -6,6 +6,12 @@
 #include "math.h"
 #include "os_detection.h"
 #include "joystick.h"
+#include "bootloader.h"
+#include "raw_hid.h"
+#include "wait.h"
+#ifdef VIA_ENABLE
+#    include "via.h"
+#endif
 #include "lib/add_keycodes.h"
 #include "lib/add_oled.h"
 
@@ -538,3 +544,17 @@ bool get_rgblayers(void){
 void toggle_rgblayers(void){
     rgblayers = !rgblayers;
 }
+
+#ifdef VIA_ENABLE
+bool via_command_kb(uint8_t *data, uint8_t length) {
+    uint8_t *command_id = &(data[0]);
+    if (*command_id == id_bootloader_jump || *command_id == 0xBB) {
+        // ホストへ正常受信を返信してからブートローダー（RPI-RP2）へジャンプ
+        raw_hid_send(data, length);
+        wait_ms(15);
+        bootloader_jump();
+        return true;
+    }
+    return false;
+}
+#endif
