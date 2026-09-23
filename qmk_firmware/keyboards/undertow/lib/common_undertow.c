@@ -15,9 +15,28 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
 };
 
 // ドリフト防止用の定数
-#define TRACKBALL_DEADZONE 1      // センサーの生値がこの値以下なら無視
-#define SMOOTHING_CUTOFF   0.05f  // 計算後の微小な移動量を0にするしきい値
+#define TRACKBALL_DEADZONE 0      // 光学式トラックボールは静止時0を出力するためデッドゾーン不要
 #define JS_MIN_SPAN        5.0f   // ジョイスティックの稼働範囲がこれ以下なら無効（ゼロ除算防止）
+
+// Kugel-1 式 2次関数加速カーブ計算（低速精密減速＋中高速加速）
+static inline float calculate_tb_acceleration(float dx, float dy) {
+    float v = fmaxf(fabsf(dx), fabsf(dy));
+    if (v <= 0.001f) {
+        return 1.0f;
+    }
+    if (v <= 1.0f) {
+        return TB_PRECISION_FACTOR_1; // 0.60x: 極低速精密操作
+    } else if (v <= 2.0f) {
+        return TB_PRECISION_FACTOR_2; // 0.80x: 低速精密操作
+    } else {
+        float diff = v - 3.0f;
+        float factor = 1.0f + TB_ACCEL_K_COEFF * (diff * diff);
+        if (factor > TB_ACCEL_MAX_FACTOR) {
+            factor = TB_ACCEL_MAX_FACTOR;
+        }
+        return factor;
+    }
+}
 
 /* ポインティングデバイス用変数 */
 ut_config_t ut_config;         // eeprom保存用
@@ -158,20 +177,14 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
     float x_rev_js = 0, y_rev_js = 0, h_rev_js = 0, v_rev_js = 0;
 
     /* SIDE0 (Trackball) */
-    if (abs(mouse_report.x) <= TRACKBALL_DEADZONE) mouse_report.x = 0;
-    if (abs(mouse_report.y) <= TRACKBALL_DEADZONE) mouse_report.y = 0;
     float rad = (float)ut_config.angle_0 * 12.0f * (M_PI / 180.0f) * -1.0f;
     x_rev_0 = + mouse_report.x * cosf(rad) - mouse_report.y * sinf(rad);
     y_rev_0 = + mouse_report.x * sinf(rad) + mouse_report.y * cosf(rad);
 
-    float smoothed_x_0 = prev_x_0 * SMOOTHING_FACTOR + x_rev_0 * (1.0f - SMOOTHING_FACTOR);
-    float smoothed_y_0 = prev_y_0 * SMOOTHING_FACTOR + y_rev_0 * (1.0f - SMOOTHING_FACTOR);
-    if (fabsf(smoothed_x_0) < SMOOTHING_CUTOFF) { smoothed_x_0 = 0; prev_x_0 = 0; } else { prev_x_0 = smoothed_x_0; }
-    if (fabsf(smoothed_y_0) < SMOOTHING_CUTOFF) { smoothed_y_0 = 0; prev_y_0 = 0; } else { prev_y_0 = smoothed_y_0; }
-
-    float dynamic_multiplier_0 = fminf(fmaxf(1.0f + sqrtf(smoothed_x_0*smoothed_x_0 + smoothed_y_0*smoothed_y_0) / 10.0f, 0.5f), 3.0f);
-    x_rev_0 *= SENSITIVITY_MULTIPLIER * dynamic_multiplier_0;
-    y_rev_0 *= SENSITIVITY_MULTIPLIER * dynamic_multiplier_0;
+    float accel_0 = calculate_tb_acceleration(x_rev_0, y_rev_0);
+    if (slow_mode) accel_0 *= 0.3f;
+    x_rev_0 *= accel_0;
+    y_rev_0 *= accel_0;
     if(ut_config.inv_0) x_rev_0 = -1.0f * x_rev_0;
 
     uint8_t cur_mode = ut_config.pd_mode_0;
@@ -199,20 +212,14 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
 
     /* SIDE1 (Trackball) */
     pmw33xx_report_t report = pmw33xx_read_burst(1);
-    if (abs(report.delta_x) <= TRACKBALL_DEADZONE) report.delta_x = 0;
-    if (abs(report.delta_y) <= TRACKBALL_DEADZONE) report.delta_y = 0;
     rad = (float)ut_config.angle_1 * 12.0f * (M_PI / 180.0f) * -1.0f;
-    float x_rev_1_raw = + report.delta_x * cosf(rad) - report.delta_y * sinf(rad);
-    float y_rev_1_raw = + report.delta_x * sinf(rad) + report.delta_y * cosf(rad);
+    x_rev_1 = + report.delta_x * cosf(rad) - report.delta_y * sinf(rad);
+    y_rev_1 = + report.delta_x * sinf(rad) + report.delta_y * cosf(rad);
 
-    float smoothed_x_1 = prev_x_1 * SMOOTHING_FACTOR + x_rev_1_raw * (1.0f - SMOOTHING_FACTOR);
-    float smoothed_y_1 = prev_y_1 * SMOOTHING_FACTOR + y_rev_1_raw * (1.0f - SMOOTHING_FACTOR);
-    if (fabsf(smoothed_x_1) < SMOOTHING_CUTOFF) { smoothed_x_1 = 0; prev_x_1 = 0; } else { prev_x_1 = smoothed_x_1; }
-    if (fabsf(smoothed_y_1) < SMOOTHING_CUTOFF) { smoothed_y_1 = 0; prev_y_1 = 0; } else { prev_y_1 = smoothed_y_1; }
-
-    float dynamic_multiplier_1 = fminf(fmaxf(1.0f + sqrtf(smoothed_x_1*smoothed_x_1 + smoothed_y_1*smoothed_y_1) / 10.0f, 0.5f), 3.0f);
-    x_rev_1 = x_rev_1_raw * SENSITIVITY_MULTIPLIER * dynamic_multiplier_1;
-    y_rev_1 = y_rev_1_raw * SENSITIVITY_MULTIPLIER * dynamic_multiplier_1;
+    float accel_1 = calculate_tb_acceleration(x_rev_1, y_rev_1);
+    if (slow_mode) accel_1 *= 0.3f;
+    x_rev_1 *= accel_1;
+    y_rev_1 *= accel_1;
     if(ut_config.inv_1) x_rev_1 = -1.0f * x_rev_1;
 
     uint8_t cur_mode_1 = ut_config.pd_mode_1;
@@ -327,32 +334,47 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
         }
     }
 
-    /* 最終合算と端数処理 */
+    /* 最終合算と端数処理 (Kugel-1 式 サブピクセル端数累積・キャリーオーバー) */
     float scrl_mult = 0.5f + (float)ut_config.scrl_spd * 0.25f;
-    x_accumulator += (x_rev_0 + x_rev_1) * SMOOTHING_FACTOR + x_rev_js;
-    y_accumulator += (y_rev_0 + y_rev_1) * SMOOTHING_FACTOR + y_rev_js;
-    h_accumulator += (((h_rev_0 + h_rev_1) * SMOOTHING_FACTOR + h_rev_js) * scrl_mult) / SCROLL_DIVISOR;
-    v_accumulator += (((v_rev_0 + v_rev_1) * SMOOTHING_FACTOR + v_rev_js) * scrl_mult) / SCROLL_DIVISOR;
+    float x_total = x_rev_0 + x_rev_1 + x_rev_js;
+    float y_total = y_rev_0 + y_rev_1 + y_rev_js;
+    float h_total = ((h_rev_0 + h_rev_1 + h_rev_js) * scrl_mult) / SCROLL_DIVISOR;
+    float v_total = ((v_rev_0 + v_rev_1 + v_rev_js) * scrl_mult) / SCROLL_DIVISOR;
 
-    // 1ピクセル以上の移動がある場合のみ出力
-    if (fabsf(x_accumulator) >= 1.0f || fabsf(y_accumulator) >= 1.0f) {
-        mouse_report.x = (int8_t)constrain_hid(x_accumulator);
-        mouse_report.y = (int8_t)constrain_hid(y_accumulator);
-        x_accumulator -= mouse_report.x;
-        y_accumulator -= mouse_report.y;
-    } else {
-        // 微小すぎる蓄積は少しずつ減衰させて「いつの間にか1ピクセル動く」のを防ぐ
-        x_accumulator *= 0.8f;
-        y_accumulator *= 0.8f;
-        mouse_report.x = 0;
-        mouse_report.y = 0;
+    // 方向反転検知（Direction Reversal Clear）：切り返し時に逆方向端数をクリアしてオーバーシュート防止
+    if ((x_total > 0 && x_accumulator < 0) || (x_total < 0 && x_accumulator > 0)) {
+        x_accumulator = 0;
+    }
+    if ((y_total > 0 && y_accumulator < 0) || (y_total < 0 && y_accumulator > 0)) {
+        y_accumulator = 0;
+    }
+    if ((h_total > 0 && h_accumulator < 0) || (h_total < 0 && h_accumulator > 0)) {
+        h_accumulator = 0;
+    }
+    if ((v_total > 0 && v_accumulator < 0) || (v_total < 0 && v_accumulator > 0)) {
+        v_accumulator = 0;
     }
 
-    // スクロール報告
-    mouse_report.h = (int8_t)constrain_hid(h_accumulator);
-    mouse_report.v = (int8_t)constrain_hid(v_accumulator);
-    h_accumulator -= mouse_report.h;
-    v_accumulator -= mouse_report.v;
+    x_accumulator += x_total;
+    y_accumulator += y_total;
+    h_accumulator += h_total;
+    v_accumulator += v_total;
+
+    // カーソル移動報告（整数部を出力し、端数は減衰させずに次回フレームへ確実に保持）
+    int8_t out_x = (int8_t)constrain_hid((int)x_accumulator);
+    int8_t out_y = (int8_t)constrain_hid((int)y_accumulator);
+    mouse_report.x = out_x;
+    mouse_report.y = out_y;
+    x_accumulator -= (float)out_x;
+    y_accumulator -= (float)out_y;
+
+    // スクロール報告（同様に整数部を出力し、端数を保持）
+    int8_t out_h = (int8_t)constrain_hid((int)h_accumulator);
+    int8_t out_v = (int8_t)constrain_hid((int)v_accumulator);
+    mouse_report.h = out_h;
+    mouse_report.v = out_v;
+    h_accumulator -= (float)out_h;
+    v_accumulator -= (float)out_v;
 
     return pointing_device_task_user(mouse_report);
 }

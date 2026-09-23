@@ -34,6 +34,12 @@
 #define SENSITIVITY_DIVISOR 0.5    // 最終的な感度調整
 #define SMOOTHING_FACTOR 0.7 // 前の動きの影響度
 
+// Kugel-1 式 トラックボール加速・精密制御パラメータ
+#define TB_ACCEL_K_COEFF        0.030f // 2次関数加速係数
+#define TB_ACCEL_MAX_FACTOR     3.50f  // 最大加速倍率
+#define TB_PRECISION_FACTOR_1   0.60f  // 極低速時（v <= 1）の精密減速倍率
+#define TB_PRECISION_FACTOR_2   0.80f  // 低速時（v <= 2）の精密減速倍率
+
 // スローモード時カーソル速度
 #define CPI_SLOW 300
 #define AMP_SLOW 4.0
