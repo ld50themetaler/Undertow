@@ -43,17 +43,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______,
         // Side1 (Left)
         _______, _______,
-        SCRL_SPD_D, _______, SCRL_SPD_I, _______,
+        SCRL_SPD_I, ACCEL_SPD_D, SCRL_SPD_D, ACCEL_SPD_I,
         _______
     ),
     [4] = LAYOUT(
         // Side0 (Right)
-        _______, MO(8),
+        _______, _______,
         _______, _______, _______, _______,
         _______,
         // Side1 (Left)
-        SPD_I_1, SPD_D_1,
-        _______, _______, _______, _______,
+        _______, _______,
+        _______, ACCEL_TOG, _______, _______,
         _______
     ),
     [5] = LAYOUT(

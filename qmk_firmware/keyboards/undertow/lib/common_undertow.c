@@ -20,23 +20,21 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
 
 // 加速度プロファイル構造体
 typedef struct {
-    float low_mult_1;   // 極低速倍率 (v <= 1.5)
-    float low_mult_2;   // 低速倍率 (1.5 < v <= 3.0)
-    float low_mult_3;   // 中低速倍率 (3.0 < v <= 5.0)
-    float k_coeff;      // 加速係数 (v > 6.0)
+    float low_mult_min; // 極低速倍率 (v <= 1.5)
+    float k_coeff;      // 加速係数 (v > 12.0)
     float max_factor;   // 最大倍率
 } tb_accel_profile_t;
 
 static const tb_accel_profile_t s_accel_profiles[ACCEL_LVL_MAX + 1] = {
-    /* 0: OFF */    { 1.00f, 1.00f, 1.00f, 0.000f, 1.00f },
-    /* 1: 超精密 */ { 0.30f, 0.50f, 0.70f, 0.015f, 2.00f },
-    /* 2: マイルド */{ 0.35f, 0.55f, 0.75f, 0.020f, 2.75f },
-    /* 3: 標準 */   { 0.40f, 0.60f, 0.80f, 0.025f, 3.50f },
-    /* 4: キビキビ */{ 0.45f, 0.65f, 0.85f, 0.035f, 4.50f },
-    /* 5: ウルトラ */{ 0.50f, 0.70f, 0.90f, 0.050f, 6.00f },
+    /* 0: OFF */    { 1.00f, 0.000f, 1.00f },
+    /* 1: 超精密 */ { 0.12f, 0.012f, 2.00f },
+    /* 2: マイルド */{ 0.16f, 0.018f, 2.75f },
+    /* 3: 標準 */   { 0.20f, 0.025f, 3.50f },
+    /* 4: キビキビ */{ 0.24f, 0.035f, 4.50f },
+    /* 5: ウルトラ */{ 0.28f, 0.050f, 6.00f },
 };
 
-// Kugel-1 式 2次関数加速カーブ計算（低速域拡大・超精密減速＋中高速加速）
+// Kugel-1 連続補間＆2次関数加速カーブ計算（極低速精密減速＋滑らか補間＋中高速加速）
 static inline float calculate_tb_acceleration(float dx, float dy) {
     uint8_t lvl = ut_config.accel_lvl;
     if (lvl > ACCEL_LVL_MAX) {
@@ -53,15 +51,18 @@ static inline float calculate_tb_acceleration(float dx, float dy) {
     }
 
     if (v <= 1.5f) {
-        return p->low_mult_1;
-    } else if (v <= 3.0f) {
-        return p->low_mult_2;
-    } else if (v <= 5.0f) {
-        return p->low_mult_3;
-    } else if (v <= 6.0f) {
-        return 1.00f; // 等倍巡航
+        // 極低速域：ドット単位の超精密位置合わせ
+        return p->low_mult_min;
+    } else if (v <= 9.0f) {
+        // 低〜中速域：極低速から等倍(1.0f)まで段差なく滑らかにリニア補間
+        float t = (v - 1.5f) * (1.0f / 7.5f);
+        return p->low_mult_min + t * (1.0f - p->low_mult_min);
+    } else if (v <= 12.0f) {
+        // 巡航等倍域：手ブレのない安定した標準操作
+        return 1.00f;
     } else {
-        float diff = v - 6.0f;
+        // 高速加速域：弾いた時だけ2次関数で爽快に加速
+        float diff = v - 12.0f;
         float factor = 1.0f + p->k_coeff * (diff * diff);
         if (factor > p->max_factor) {
             factor = p->max_factor;
