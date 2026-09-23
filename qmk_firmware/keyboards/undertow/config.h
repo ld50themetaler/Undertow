@@ -42,7 +42,7 @@
 #define CPI_SLOW 300
 #define AMP_SLOW 4.0
 // オートマウスの設定
-#define AUTO_MOUSE_DEFAULT true
+#define AUTO_MOUSE_DEFAULT false
 #define AUTO_MOUSE_DEFAULT_LAYER 1
 #define AUTO_MOUSE_TIME 750
 #define AUTO_MOUSE_DELAY 750
